@@ -12,8 +12,9 @@ config/                    snapshot of ~/.config/opencode (sanitized)
   AGENTS.md                global agent rules (wl-copy etc.)
   skills/                  base, git-commit, pfs-tfs, test-* ...
   tools/                   custom tools: rtmate (SSH/tmate), gitlab-feedback
+  agents/                  implement, review-guide
   commands/                /plannotator-* slash command stubs
-docs/                      plannotator.md (spike findings)
+docs/                      report-card.md, plannotator.md
 scripts/bootstrap.sh       copy config/ -> ~/.config/opencode (with backup)
 docker/                    e2e container: Dockerfile, e2e.sh, test-in-container.sh
 tests/mock-openai.py       mock OpenAI-compatible server for e2e (stdlib only)
@@ -66,6 +67,16 @@ curl -fsSL https://plannotator.ai/install.sh | bash -s -- --minimal
 ```
 
 Compatibility notes and the headless spike results: [docs/plannotator.md](docs/plannotator.md).
+
+## Agents
+
+Two custom primary agents live in `config/agents/`:
+
+- `implement` — makes the change and runs the project's checks; ends with a report card.
+- `review-guide` — read-only (edit/write disabled); walks you through a finished change
+  step by step, stops after each step, and collects numbered feedback items.
+
+Report card format: [docs/report-card.md](docs/report-card.md).
 
 ## Secrets policy
 
