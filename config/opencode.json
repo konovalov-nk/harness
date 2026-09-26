@@ -1,0 +1,134 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "permission": {
+    "skill": {
+      "*": "allow",
+      "test-denied": "deny",
+      "test-ask": "ask"
+    }
+  },
+  "provider": {
+    "local-llm-cydonia-24b-v4.3-gguf-q4_k_m": {
+      "npm": "@ai-sdk/openai-compatible",
+      "name": "Cydonia-24B-v4.3 GGUF Q4_K_M (llama.cpp) (local)",
+      "options": {
+        "baseURL": "http://localhost:10007/v1"
+      },
+      "models": {
+        "cydonia-24b-v4.3": {
+          "name": "Cydonia-24B-v4.3 GGUF Q4_K_M (llama.cpp) (Local)",
+          "limit": {
+            "context": 32768,
+            "output": 4096
+          }
+        }
+      }
+    },
+    "local-llm-qwen36-27b-aeon-ultimate-uncensored-text-nvfp4-mtp-xs": {
+      "npm": "@ai-sdk/openai-compatible",
+      "name": "Qwen3.6-27B-AEON-Ultimate-Uncensored-Text-NVFP4-MTP-XS (vLLM) (local)",
+      "options": {
+        "baseURL": "http://localhost:10008/v1"
+      },
+      "models": {
+        "aeon-ultimate-text": {
+          "name": "Qwen3.6-27B-AEON-Ultimate-Uncensored-Text-NVFP4-MTP-XS (vLLM) (Local)",
+          "limit": {
+            "context": 81920,
+            "output": 8192
+          }
+        }
+      }
+    },
+    "local-llm-qwen36-27b-text-nvfp4-mtp-vllm": {
+      "npm": "@ai-sdk/openai-compatible",
+      "name": "Qwen3.6-27B-Text-NVFP4-MTP (vLLM) (local)",
+      "options": {
+        "baseURL": "http://localhost:10003/v1"
+      },
+      "models": {
+        "qwen3.6-27b-text-nvfp4-mtp": {
+          "name": "Qwen3.6-27B-Text-NVFP4-MTP (vLLM) (Local)",
+          "limit": {
+            "context": 81920,
+            "output": 8192
+          }
+        }
+      }
+    },
+    "local-llm-qwen38-27b-nvfp4-dflash2-vllm": {
+      "npm": "@ai-sdk/openai-compatible",
+      "name": "Qwen3.8-27B-NVFP4-DFlash2 (vLLM) (local)",
+      "options": {
+        "baseURL": "http://localhost:10010/v1"
+      },
+      "models": {
+        "qwen3.8-27b-nvfp4-dflash2": {
+          "name": "Qwen3.8-27B-NVFP4-DFlash2 (vLLM) (Local)",
+          "limit": {
+            "context": 32768,
+            "output": 4096
+          }
+        }
+      }
+    },
+    "local-llm-qwen38-27b-nvfp4-mtp-ninfer-vision": {
+      "npm": "@ai-sdk/openai-compatible",
+      "name": "Qwen3.8-27B-NVFP4-MTP Vision (NInfer) (local)",
+      "options": {
+        "baseURL": "http://localhost:10012/v1"
+      },
+      "models": {
+        "qwen3.8-27b-ninfer-mtp-vision": {
+          "name": "Qwen3.8-27B-NVFP4-MTP Vision (NInfer) (Local)",
+          "limit": {
+            "context": 81920,
+            "output": 8192
+          },
+          "attachment": true,
+          "modalities": {
+            "input": [
+              "text",
+              "image"
+            ],
+            "output": [
+              "text"
+            ]
+          }
+        }
+      }
+    },
+    "local-llm-qwen38-27b-nvfp4-mtp-ninfer": {
+      "npm": "@ai-sdk/openai-compatible",
+      "name": "Qwen3.8-27B-NVFP4-MTP (NInfer) (local)",
+      "options": {
+        "baseURL": "http://localhost:10011/v1"
+      },
+      "models": {
+        "qwen3.8-27b-ninfer-mtp": {
+          "name": "Qwen3.8-27B-NVFP4-MTP (NInfer) (Local)",
+          "limit": {
+            "context": 240000,
+            "output": 8192
+          }
+        }
+      }
+    },
+    "local-llm-qwen38-27b-nvfp4-mtp-vllm": {
+      "npm": "@ai-sdk/openai-compatible",
+      "name": "Qwen3.8-27B-NVFP4-MTP (vLLM) (local)",
+      "options": {
+        "baseURL": "http://localhost:10009/v1"
+      },
+      "models": {
+        "qwen3.8-27b-nvfp4-mtp": {
+          "name": "Qwen3.8-27B-NVFP4-MTP (vLLM) (Local)",
+          "limit": {
+            "context": 32768,
+            "output": 4096
+          }
+        }
+      }
+    }
+  }
+}

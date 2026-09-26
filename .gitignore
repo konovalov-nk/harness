@@ -3,3 +3,11 @@
 .dolt/
 *.db
 .beads-credential-key
+
+# Secrets / local-only files
+config/remote.env
+config/opencode.json.bak
+config/**/node_modules/
+config/**/.venv/
+*.env
+*.log
