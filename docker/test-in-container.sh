@@ -11,9 +11,8 @@ rm -rf "$HOME/.config/opencode" "$HOME/.local/share/opencode"
 mkdir -p "$HOME/.config"
 cp -a /harness/config "$HOME/.config/opencode"
 
-# Custom tools that need host resources (SSH/tmate, GitLab API) are off for e2e.
+# Custom tools that need host resources (SSH/tmate) are off for e2e.
 rm -f "$HOME/.config/opencode/tools/rtmate.ts" "$HOME/.config/opencode/tools/rtmate.txt"
-rm -rf "$HOME/.config/opencode/tools/gitlab-feedback" "$HOME/.config/opencode/tools/gitlab-feedback.ts"
 
 # Add a mock provider (OpenAI-compatible) serving 127.0.0.1:19000.
 python3 - <<'PY'

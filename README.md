@@ -11,7 +11,7 @@ config/                    snapshot of ~/.config/opencode (sanitized)
   tui.json                 keybinds
   AGENTS.md                global agent rules (wl-copy etc.)
   skills/                  base, git-commit, pfs-tfs, test-* ...
-  tools/                   custom tools: rtmate (SSH/tmate), gitlab-feedback
+  tools/                   custom tools: rtmate (SSH/tmate)
   agents/                  implement, review-guide
   commands/                /plannotator-* slash command stubs
 docs/                      report-card.md, plannotator.md, token-budget.md, research/
@@ -39,7 +39,6 @@ $EDITOR ~/.config/opencode/remote.env   # fill from remote.env.example (rtmate)
 
 Environment variables used by tools (never committed):
 
-- `GITLAB_NPM_TOKEN`, `GITLAB_API_URL` — gitlab-feedback tool
 - `REMOTE_*` — rtmate, via `~/.config/opencode/remote.env`
 
 ## E2E container
@@ -49,7 +48,7 @@ docker/e2e.sh                  # or: ENGINE=podman docker/e2e.sh
 ```
 
 Builds a Debian image with pinned opencode 1.18.32, mounts the repo read-only, copies
-`config/` into the container HOME, removes host-dependent tools (rtmate, gitlab-feedback),
+`config/` into the container HOME, removes host-dependent tools (rtmate),
 starts `tests/mock-openai.py` and asserts `opencode run -m mock/mock "hi"` returns
 `mock-ok`. The host `~/.config/opencode` is never touched.
 
