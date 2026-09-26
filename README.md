@@ -13,6 +13,8 @@ config/                    snapshot of ~/.config/opencode (sanitized)
   skills/                  base, git-commit, pfs-tfs, test-* ...
   tools/                   custom tools: rtmate (SSH/tmate), gitlab-feedback
 scripts/bootstrap.sh       copy config/ -> ~/.config/opencode (with backup)
+docker/                    e2e container: Dockerfile, e2e.sh, test-in-container.sh
+tests/mock-openai.py       mock OpenAI-compatible server for e2e (stdlib only)
 .beads/                    bd database + git hooks (bd init)
 AGENTS.md, CLAUDE.md       beads workflow instructions for agents
 ```
@@ -36,6 +38,20 @@ Environment variables used by tools (never committed):
 
 - `GITLAB_NPM_TOKEN`, `GITLAB_API_URL` — gitlab-feedback tool
 - `REMOTE_*` — rtmate, via `~/.config/opencode/remote.env`
+
+## E2E container
+
+```bash
+docker/e2e.sh                  # or: ENGINE=podman docker/e2e.sh
+```
+
+Builds a Debian image with pinned opencode 1.18.32, mounts the repo read-only, copies
+`config/` into the container HOME, removes host-dependent tools (rtmate, gitlab-feedback),
+starts `tests/mock-openai.py` and asserts `opencode run -m mock/mock "hi"` returns
+`mock-ok`. The host `~/.config/opencode` is never touched.
+
+To test against real local models, start the container with `--network=host` and use any
+`local-llm-*` provider from the config (their `baseURL` points at `localhost:1000x`).
 
 ## Secrets policy
 
