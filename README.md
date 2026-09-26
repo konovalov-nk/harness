@@ -14,7 +14,7 @@ config/                    snapshot of ~/.config/opencode (sanitized)
   tools/                   custom tools: rtmate (SSH/tmate), gitlab-feedback
   agents/                  implement, review-guide
   commands/                /plannotator-* slash command stubs
-docs/                      report-card.md, plannotator.md, research/
+docs/                      report-card.md, plannotator.md, token-budget.md, research/
 scripts/bootstrap.sh       copy config/ -> ~/.config/opencode (with backup)
 docker/                    e2e container: Dockerfile, e2e.sh, test-in-container.sh
 tests/mock-openai.py       mock OpenAI-compatible server for e2e (stdlib only)
@@ -77,6 +77,11 @@ Two custom primary agents live in `config/agents/`:
   step by step, stops after each step, and collects numbered feedback items.
 
 Report card format: [docs/report-card.md](docs/report-card.md).
+
+## Token budget
+
+Per-request cost measurements and the applied trims (−1,201 wire tokens, −11.4%):
+[docs/token-budget.md](docs/token-budget.md).
 
 ## Secrets policy
 

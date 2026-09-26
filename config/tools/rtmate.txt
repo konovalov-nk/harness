@@ -1,87 +1,29 @@
-Use this tool to execute commands on remote servers with live terminal viewing via tmate.
+Remote command execution with a live tmate view for the user.
 
-# Core Concept
-This tool allows you to control a remote server while providing a live "window" (tmate session) for the user to watch. It bridges the gap between background automation (SSH) and interactive observation (Terminal).
+# Tools
 
-# Available Tools
+1. **rtmateRun** (primary): run a command over SSH and mirror it to tmate.
+   - Args: `command`. Returns stdout/stderr.
+   - Use for ~95% of tasks (install packages, read files, run scripts).
+   - Fresh SSH session: it does NOT share sudo with the interactive window, so password-protected `sudo` FAILS. Use the sudo trick below.
+2. **rtmateSend**: type into the live tmate session.
+   - Args: `command`. Returns nothing.
+   - ONE line per call. Never send multiple commands or paste a script.
+   - Use for interactive prompts/TUIs, or for privileged commands in the user's authenticated session.
+3. **rtmateRead**: capture the visible tmate screen.
+   - Args: `lines` (optional). Returns the screen text.
+   - For debug and verification only. Do NOT poll.
 
-1. **rtmateRun** -> *Primary Automation Tool*
-   - **Purpose:** Executes a command via SSH (background) and mirrors it to tmate.
-   - **Arguments:** `command` (string).
-   - **Returns:** The standard output (stdout/stderr).
-   - **Usage:** Use this for 95% of tasks (installing pkgs, reading files, running scripts).
-   - **Limitation:** Does NOT share sudo privileges with the interactive window (unless user disabled `tty_tickets`).
+# Key workflows
 
-2. **rtmateSend** -> *Interactive Input*
-   - **Purpose:** Types keys/commands into the live tmate session.
-   - **Arguments:** `command` (string).
-   - **Returns:** Nothing (void).
-   - **Usage:** Use for interactive tasks (prompts, TUI) OR for executing privileged commands that require the user's cached sudo ticket.
-   - **CONSTRAINT:** Accepts only **ONE** line at a time. Do not send multiple commands separated by newlines.
+- Interactive installer: start it with `rtmateSend`, stop immediately, ask the user to answer the prompts in the terminal, then verify the result with `rtmateRun`.
+- Sudo trick:
+  1. `rtmateSend(command="sudo apt update > /tmp/update.log 2>&1")`
+  2. Wait for the user to enter the password.
+  3. `rtmateRun(command="cat /tmp/update.log")`
+- Complex content (scripts, Makefiles, JSON, heavy quoting): write the file locally in /tmp, copy it with `scp` through `rtmateRun`, then execute it remotely. Do not embed heredocs or multi-line code in `rtmateRun` unless it is truly a one-liner.
 
-3. **rtmateRead** -> *Interactive Inspection*
-   - **Purpose:** Captures the text currently visible on the tmate screen.
-   - **Arguments:** `lines` (number, optional).
-   - **Returns:** The terminal screen content as a string.
-   - **Usage:** Use this to "see" what happened *if* you need to debug or verify a specific state. **Do not use this for polling.**
+# Notes
 
-# Scenario Gallery: What happens?
-
-## Scenario A: Standard Execution (e.g., checking version)
-**Agent calls:** `rtmateRun(command="node -v")`
-**User sees:**
-```bash
-# [agent] node -v
-v18.16.0
-```
-**Agent receives:** `"v18.16.0"`
-
-## Scenario B: Interactive Installer (User Handoff)
-*Use this when a script takes time and asks questions.*
-**Agent calls:** `rtmateSend(command="./long-install.sh")`
-**Agent ACTION:**
-1. **Stops immediately.** Do NOT poll with `rtmateRead` waiting for prompts.
-2. **Tells User:** "I've started the installer. It may take a while to reach the confirmation prompt. Please monitor the terminal, answer 'y' when asked, and let me know when it's done."
-**User sees:** The script running... (10s... 60s...) -> `Proceed?` -> User types `y`.
-**User says:** "It's done."
-**Agent follows up:** calls `rtmateRun(command="test -f /result_file")` to verify.
-
-## Scenario C: Password Handoff (User drives)
-**Agent calls:** `rtmateSend(command="sudo -v")`
-**Agent ACTION:**
-1. **Stops immediately.**
-2. **Tells User:** "I triggered sudo. Please enter your password in the terminal."
-**User acts:** Types password and presses Enter.
-**User says:** "Ready."
-
-## Scenario D: Running Privileged Commands (The "Sudo Trick")
-*Since `rtmateRun` is a separate session, it often cannot use the sudo password entered in Scenario C. You must run the command INSIDE the interactive session.*
-
-**Goal:** Run `sudo apt update` and see the output.
-1. **Agent calls:** `rtmateSend(command="sudo apt update > /tmp/update.log 2>&1")`
-   *(Runs in the user's authenticated session)*
-2. **Agent waits:** (Briefly, or asks user to confirm completion if slow)
-3. **Agent calls:** `rtmateRun(command="cat /tmp/update.log")`
-   *(Reads the result from the file)*
-
-## Scenario E: Monitoring (TUI)
-**Agent calls:** `rtmateSend(command="htop")`
-**User sees:** The `htop` interface opens and updates live.
-**Agent action:** Later calls `rtmateSend(command="q")` to close it.
-
-## Scenario F: Creating Scripts or Makefiles
-*Use this for non-trivial scripts, Makefiles, Python files, heredocs, commands with `$()`, tabs, quotes, or Unicode.*
-
-**Goal:** Create and run a benchmark script on the remote host.
-1. **Agent writes the file locally** under `/tmp` using normal file-editing tools, for example `/tmp/bench_streaming.py`.
-2. **Agent calls:** `rtmateRun(command="scp /tmp/bench_streaming.py mbook:/Users/br11k/moss-tts-nano-test/bench_streaming.py")`
-3. **Agent calls:** `rtmateRun(command="python /Users/br11k/moss-tts-nano-test/bench_streaming.py")`
-
-This avoids fragile shell quoting through SSH. Do not embed large heredocs, Makefile bodies, or complex Python code directly inside `rtmateRun` unless it is truly a one-liner.
-
-# Important Notes
-- **Prerequisites:** The session is assumed to be pre-initialized by the user. You can start running commands immediately.
-- **Polling:** Avoid loops with `rtmateRead()`. It is slow and inefficient. Trust the user to handle the timing of interactive prompts.
-- **Sudo Isolation:** `rtmateRun` uses a fresh SSH session. Even if the user just ran `sudo` in the terminal, `rtmateRun("sudo ...")` will FAIL asking for a password. Use **Scenario D** to bypass this.
-- **NO MULTILINE SENDS:** `rtmateSend` accepts only single commands. Do NOT try to send a script by pasting lines. If you need complex logic in the interactive shell, write a script file using `rtmateRun` first, then run it with `rtmateSend("/tmp/myscript.sh")`.
-- **Prefer local temp files + scp for complex content:** For scripts, Makefiles, JSON, or commands with heavy quoting, write the file locally in `/tmp`, copy it to the remote host with `scp`, then execute it remotely with `rtmateRun`.
+- The session is pre-initialized; start running commands immediately.
+- No polling loops with `rtmateRead`; trust the user to handle prompt timing.

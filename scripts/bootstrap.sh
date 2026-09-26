@@ -23,4 +23,10 @@ fi
 tar -C "$SRC" --exclude=node_modules --exclude=.venv -cf - . | tar -C "$DST" -xf -
 [[ -f "$DST/remote.env" ]] || cp "$SRC/remote.env.example" "$DST/remote.env"
 
+if [[ -d "$DST/tools/gitlab-feedback" && ! -d "$DST/tools/gitlab-feedback/node_modules" ]]; then
+  echo "note: gitlab-feedback deps are not vendored. Install them with:"
+  echo "      (cd \"$DST/tools/gitlab-feedback\" && npm ci)"
+  echo "      (needs access to the gitlab.example.com npm registry)"
+fi
+
 echo "done: config -> ${DST}"
