@@ -1,0 +1,12 @@
+# gitleaks config for the harness repo.
+# Extends the default rules and allowlists known non-secret placeholders.
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "harness placeholders and examples"
+paths = [
+  '''config/remote\.env\.example''',
+  '''docs/research/agent-workflows-research\.md''',
+]

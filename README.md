@@ -87,7 +87,10 @@ Per-request cost measurements and the applied trims (−1,201 wire tokens, −11
 
 - Auth lives outside the repo: `~/.local/share/opencode/auth.json`, `mcp-auth.json`, env vars.
 - `remote.env` and `opencode.json.bak` are excluded on purpose (`*.bak` contained tokens).
-- Never commit `*.env`, API keys, or auth dumps; run gitleaks before publishing.
+- Never commit `*.env`, API keys, or auth dumps.
+- gitleaks: pre-commit scans staged changes, pre-push scans the full history, CI runs on
+  push/PR. Install the binary in `~/.local/bin` (<https://github.com/gitleaks/gitleaks>).
+  Hooks print a warning and skip when the binary is missing.
 
 ## bd workflow
 
