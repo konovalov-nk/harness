@@ -12,6 +12,8 @@ config/                    snapshot of ~/.config/opencode (sanitized)
   AGENTS.md                global agent rules (wl-copy etc.)
   skills/                  base, git-commit, pfs-tfs, test-* ...
   tools/                   custom tools: rtmate (SSH/tmate), gitlab-feedback
+  commands/                /plannotator-* slash command stubs
+docs/                      plannotator.md (spike findings)
 scripts/bootstrap.sh       copy config/ -> ~/.config/opencode (with backup)
 docker/                    e2e container: Dockerfile, e2e.sh, test-in-container.sh
 tests/mock-openai.py       mock OpenAI-compatible server for e2e (stdlib only)
@@ -52,6 +54,18 @@ starts `tests/mock-openai.py` and asserts `opencode run -m mock/mock "hi"` retur
 
 To test against real local models, start the container with `--network=host` and use any
 `local-llm-*` provider from the config (their `baseURL` points at `localhost:1000x`).
+
+## Review workflow (Plannotator)
+
+`@plannotator/opencode@0.27.20` is pinned in `config/opencode.json`. Plan review opens in
+the browser when the `plan` agent calls `submit_plan`. `/plannotator-review` and
+`/plannotator-annotate` (stubs in `config/commands/`) need the CLI:
+
+```bash
+curl -fsSL https://plannotator.ai/install.sh | bash -s -- --minimal
+```
+
+Compatibility notes and the headless spike results: [docs/plannotator.md](docs/plannotator.md).
 
 ## Secrets policy
 

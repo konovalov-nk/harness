@@ -1,5 +1,6 @@
 {
   "$schema": "https://opencode.ai/config.json",
+  "plugin": ["@plannotator/opencode@0.27.20"],
   "permission": {
     "skill": {
       "*": "allow",
