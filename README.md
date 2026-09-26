@@ -14,7 +14,7 @@ config/                    snapshot of ~/.config/opencode (sanitized)
   tools/                   custom tools: rtmate (SSH/tmate), gitlab-feedback
   agents/                  implement, review-guide
   commands/                /plannotator-* slash command stubs
-docs/                      report-card.md, plannotator.md
+docs/                      report-card.md, plannotator.md, research/
 scripts/bootstrap.sh       copy config/ -> ~/.config/opencode (with backup)
 docker/                    e2e container: Dockerfile, e2e.sh, test-in-container.sh
 tests/mock-openai.py       mock OpenAI-compatible server for e2e (stdlib only)
