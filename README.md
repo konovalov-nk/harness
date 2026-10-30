@@ -41,6 +41,19 @@ Environment variables used by tools (never committed):
 
 - `REMOTE_*` — rtmate, via `~/.config/opencode/remote.env`
 
+## Visual explanations (OpenCode 2)
+
+Install only the new workflow without replacing your active V2 config:
+
+```bash
+python3 scripts/install-visual-explain.py
+```
+
+Then run `/visual-explain` in the TUI after a diagnosis. The agent opens an
+offline browser map of objects, interfaces, and event steps. Select a node or
+connection for details and sources; copy a follow-up back into the same TUI
+session to expand it. [Setup, example, and limitations](docs/visual-explain.md).
+
 ## E2E container
 
 ```bash

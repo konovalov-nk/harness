@@ -1,0 +1,52 @@
+{
+  "version": 1,
+  "title": "Почему после смены workspace картинка отстаёт?",
+  "summary": "Схема версии из отчёта агента. Замеры пересказаны со скриншота; причинный механизм здесь не воспроизведён и помечен как гипотеза.",
+  "sources": [
+    {"id": "user-report", "label": "Отчёт на скриншоте: ~5 мс до переключения, ~9,4 с после, ~12 мс после set untimed yes. Независимо не проверено."},
+    {"id": "v4l2-manual", "label": "Linux: буферы V4L2, обмен между приложением и драйвером, временные метки", "url": "https://docs.kernel.org/userspace-api/media/v4l/buffer.html"},
+    {"id": "mpv-manual", "label": "mpv manual: --untimed отключает привязку показа к времени; проверять ограничения выбранного video output", "url": "https://mpv.io/manual/stable/#options-untimed"}
+  ],
+  "entities": [
+    {"id": "capture", "label": "Карта захватывает видео", "technical": "Elgato", "kind": "устройство", "row": 0, "column": 0,
+     "summary": "Превращает входное видео в поток, доступный компьютеру.",
+     "details": "Это источник изображения. По отчёту захват продолжался, пока окно было скрыто. Модель устройства, транспорт и драйвер нужно проверить отдельно; схема не предполагает конкретный USB-протокол.",
+     "evidence": "observed", "sources": ["user-report"]},
+    {"id": "driver", "label": "Linux предоставляет кадры", "technical": "Ядро + видеодрайвер", "kind": "подсистема ОС", "row": 0, "column": 1,
+     "summary": "Драйвер предоставляет приложению видеобуферы и их временные метки.",
+     "details": "V4L2 — интерфейс этой подсистемы, а не ещё один запущенный плеер. Конкретный драйвер в предоставленном отчёте не установлен. Его очередь буферов не следует рисовать как бесконечный архив всех пропущенных кадров.",
+     "evidence": "documented", "sources": ["v4l2-manual"]},
+    {"id": "player", "label": "Плеер готовит изображение", "technical": "mpv + FFmpeg", "kind": "процесс", "row": 1, "column": 1,
+     "summary": "Получает видео и планирует, когда показать очередной кадр.",
+     "details": "PTS — временная метка кадра, которую плеер использует при планировании показа. В отчёте задержка исчезла после set untimed yes. Версия о скачке PTS и ожидании вывода требует трассировки конкретных версий mpv, FFmpeg и видеобэкенда.",
+     "evidence": "observed", "sources": ["user-report", "mpv-manual"]},
+    {"id": "compositor", "label": "ОС показывает окно", "technical": "Hyprland · Wayland", "kind": "композитор", "row": 1, "column": 0,
+     "summary": "Управляет окнами и собирает видимое изображение рабочего стола.",
+     "details": "При смене workspace окно mpv становится невидимым. В отчёте предложено, что прекращение показа блокирует видеовывод. Какой именно механизм ожидания срабатывает — Vulkan WSI, frame callback или другой — здесь ещё не подтверждено.",
+     "evidence": "inferred", "sources": ["user-report"]}
+  ],
+  "interfaces": [
+    {"id": "device-input", "from": "capture", "to": "driver", "label": "Входное видео", "technical": "Интерфейс устройства: не проверен",
+     "details": "Видео приходит от карты к драйверу. Чтобы назвать точный транспорт и формат, агенту нужны сведения об устройстве и драйвере. Подставлять UVC только по бренду Elgato нельзя.", "evidence": "unknown", "sources": []},
+    {"id": "capture-api", "from": "driver", "to": "player", "label": "V4L2 · кадры", "technical": "V4L2 · /dev/video0 · буферный I/O",
+     "details": "Через V4L2 приложение получает доступ к видеобуферам. При streaming I/O ioctl VIDIOC_QBUF/VIDIOC_DQBUF управляют очередью; буфер содержит timestamp. Выбор часов и момент измерения зависят от драйвера. Реальное содержимое флагов timestamp в этой сессии нужно измерить.", "evidence": "documented", "sources": ["v4l2-manual", "user-report"]},
+    {"id": "window-output", "from": "player", "to": "compositor", "label": "Изображение окна", "technical": "Wayland / графический backend mpv",
+     "details": "Плеер передаёт подготовленное изображение оконной системе. В отчёте упомянут Vulkan FIFO, но реальный backend и точку блокировки в этой объяснялке не проверяли. Это гипотеза для следующего измерения.", "evidence": "inferred", "sources": ["user-report"]},
+    {"id": "display-feedback", "from": "compositor", "to": "player", "label": "Обратная связь", "technical": "Показ / освобождение ресурса / ожидание — уточнить", "feedback": true,
+     "details": "Эта обратная связь обозначает зависимость темпа вывода от оконной системы. Она не утверждает, что вся блокировка вызвана конкретно протоколом presentation-time. Нужна трассировка, чтобы назвать реальный API и событие разблокировки.", "evidence": "inferred", "sources": ["user-report"]}
+  ],
+  "steps": [
+    {"id": "watching", "label": "Смотрим видео", "details": "По отчёту до переключения часы почти совпадали: отставание около 5 мс.", "evidence": "observed", "sources": ["user-report"],
+     "entities": {"capture": "Захватывает", "driver": "Отдаёт буферы", "player": "Показывает кадры", "compositor": "Окно видно"},
+     "interfaces": {"device-input": "uncertain", "capture-api": "flowing", "window-output": "flowing", "display-feedback": "flowing"}},
+    {"id": "hidden", "label": "Ушли на 8 секунд", "details": "Предполагаемый механизм: источник продолжает идти, а вывод mpv ждёт скрытое окно. Здесь показана гипотеза; это не запись измеренных событий.", "evidence": "inferred", "sources": ["user-report"],
+     "entities": {"capture": "Источник идёт дальше", "driver": "Метки времени растут", "player": "Вывод предположительно ждёт", "compositor": "Окно скрыто"},
+     "interfaces": {"device-input": "uncertain", "capture-api": "uncertain", "window-output": "waiting", "display-feedback": "waiting"}},
+    {"id": "returned", "label": "Вернулись", "details": "По отчёту после возврата измерено около 9,4 с отставания. Версия причины: планирование по PTS сохраняет разрыв между часами. Разрыв не обязательно означает очередь из 9 секунд сохранённых кадров.", "evidence": "inferred", "sources": ["user-report"],
+     "entities": {"capture": "Поток продолжается", "driver": "Метки идут дальше", "player": "Показывает с отставанием", "compositor": "Окно снова видно"},
+     "interfaces": {"device-input": "uncertain", "capture-api": "flowing", "window-output": "flowing", "display-feedback": "flowing"}},
+    {"id": "untimed", "label": "Включили --untimed", "details": "В отчёте после set untimed yes задержка стала около 12 мс. Руководство mpv описывает отключение тайминга; успех в одном запуске ещё не гарантирует такой же результат для любого backend.", "evidence": "observed", "sources": ["user-report", "mpv-manual"],
+     "entities": {"capture": "Поток продолжается", "driver": "Отдаёт буферы", "player": "Тайминг отключён", "compositor": "Показывает окно"},
+     "interfaces": {"device-input": "uncertain", "capture-api": "flowing", "window-output": "flowing", "display-feedback": "flowing"}}
+  ]
+}
