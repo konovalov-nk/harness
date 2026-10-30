@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="ru">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data:; base-uri 'none'; form-action 'none'; connect-src 'none'">
+<title>Visual explain</title>
+<style>
+  :root{color-scheme:light dark;--bg:light-dark(#f5f6f8,#101317);--panel:light-dark(#fff,#191e24);--ink:light-dark(#202832,#e4eaf1);--muted:light-dark(#596572,#a5b2c1);--line:light-dark(#c7d0d9,#3c4855);--accent:light-dark(#006c70,#68d5cb);--wash:light-dark(#e6f4f2,#1c3536);--wait:light-dark(#a44a12,#ffb66d);font:15px/1.5 system-ui,sans-serif}
+  *{box-sizing:border-box}[hidden]{display:none!important}body{margin:0;background:var(--bg);color:var(--ink)}main{max-width:1320px;margin:auto;padding:30px 24px}
+  h1{font-size:clamp(23px,3vw,34px);line-height:1.2;margin:8px 0 12px;font-weight:600}h2{font-size:20px;margin:10px 0}p{margin:8px 0 16px}button,a,textarea{font:inherit}button{color:inherit;cursor:pointer}button:focus-visible,a:focus-visible{outline:3px solid var(--accent);outline-offset:3px}a{color:var(--accent)}button{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:9px 12px}button[aria-pressed=true]{background:var(--wash);border-color:var(--accent)}button:disabled{opacity:.5;cursor:default}
+  .eyebrow{letter-spacing:.14em;font-size:12px;color:var(--muted)}.muted{color:var(--muted)}#summary{max-width:850px}.steps{display:flex;gap:8px;flex-wrap:wrap;margin:22px 0 14px}.steps button{display:flex;align-items:center;gap:8px}.step-number{font-variant-numeric:tabular-nums;color:var(--muted)}
+  .workspace{display:grid;grid-template-columns:minmax(0,1fr) 310px;gap:24px;align-items:start}.diagram{position:relative;min-width:0}.graph{position:relative;display:grid;gap:100px 170px;padding:32px 24px 100px;isolation:isolate}
+  .node{text-align:left;min-width:0;min-height:122px;position:relative;z-index:2;padding:15px;display:flex;flex-direction:column;gap:7px;box-shadow:0 2px 8px #00000009}.node-label{font-weight:600}.technical{font:13px/1.4 ui-monospace,monospace;overflow-wrap:anywhere}.node-state{font-size:13px;min-height:2.8em;color:var(--accent)}.node[data-waiting=true] .node-state{color:var(--wait)}
+  #wires{position:absolute;inset:0;width:100%;height:100%;z-index:0;overflow:visible;pointer-events:none}.wire{fill:none;stroke:var(--accent);stroke-width:2}.wire.waiting{stroke:var(--wait);stroke-dasharray:7 5}.wire.idle{stroke:var(--line)}.wire.uncertain{stroke:var(--muted);stroke-dasharray:3 5}.wire.selected{stroke-width:4}
+  .edge-label{position:absolute;z-index:3;transform:translate(-50%,-50%);max-width:130px;padding:5px 8px;font-size:12px;white-space:normal;overflow-wrap:anywhere}.edge-label[data-state=waiting]{color:var(--wait)}.edge-label[data-state=uncertain]{border-style:dashed}
+  .legend{display:flex;gap:16px;flex-wrap:wrap;font-size:12px;color:var(--muted);margin:0 24px 16px}.legend span{display:inline-flex;gap:6px;align-items:center}.line-key{width:24px;border-top:2px solid var(--accent)}.line-key.waiting{border-color:var(--wait);border-top-style:dashed}.line-key.uncertain{border-color:var(--muted);border-top-style:dotted}
+  .event{border-top:1px solid var(--line);padding:15px 0;margin:0 24px}.event p{margin-bottom:8px}.evidence{display:inline-block;font-size:12px;color:var(--muted);border:1px solid var(--line);padding:2px 7px;border-radius:4px}.inspector{background:var(--panel);padding:20px;border-radius:12px;min-width:0;overflow-wrap:anywhere}.inspector p{white-space:pre-line}.source-list{padding-left:20px;font-size:13px}.source-list li{margin:10px 0}.detail-label{font-size:12px;color:var(--muted);margin-top:20px}.followup{margin-top:22px;padding-top:18px;border-top:1px solid var(--line)}textarea{display:block;width:100%;min-height:130px;background:var(--bg);color:var(--ink);border:1px solid var(--line);border-radius:6px;padding:8px;margin-top:12px;resize:vertical;font:12px/1.5 ui-monospace,monospace}.followup p{font-size:12px;color:var(--muted);margin-bottom:0}#copy-status{font-size:12px;min-height:18px;margin-top:8px}footer{margin-top:20px;font-size:12px;color:var(--muted)}
+  @media(max-width:1100px){.workspace{grid-template-columns:1fr}.inspector{max-width:none}}@media(max-width:900px){.graph[data-columns="3"]{grid-template-columns:1fr!important}.graph[data-columns="3"] .node{grid-column:1!important;grid-row:auto!important}}@media(max-width:600px){main{padding:20px 12px}.graph{grid-template-columns:1fr!important;gap:90px;padding:24px 30px 70px 52px}.node{grid-column:1!important;grid-row:auto!important}.edge-label{max-width:120px}.edge-label.feedback{max-width:76px}.event{margin:0 10px}.legend{margin:0 10px 12px}.inspector{padding:16px}}
+</style>
+<main>
+  <header><div class="eyebrow">VISUAL EXPLAIN · OBJECTS / INTERFACES / EVENTS</div><h1 id="title"></h1><p id="summary" class="muted"></p></header>
+  <nav id="steps" class="steps" aria-label="События"></nav>
+  <div class="workspace">
+    <section class="diagram" aria-label="Система">
+      <div id="graph" class="graph"><svg id="wires" aria-hidden="true"><defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="context-stroke"/></marker></defs><g id="paths"></g></svg></div>
+      <div class="legend"><span><i class="line-key"></i>Передача</span><span><i class="line-key waiting"></i>Ожидание</span><span><i class="line-key uncertain"></i>Гипотеза</span></div>
+      <div class="event" aria-live="polite"><strong id="event-title"></strong> <span id="event-evidence" class="evidence"></span><p id="event-details"></p><ul id="event-sources" class="source-list"></ul></div>
+    </section>
+    <aside class="inspector" aria-label="Детали выбранного объекта">
+      <span id="detail-kind" class="eyebrow"></span><h2 id="detail-title"></h2><div id="detail-technical" class="technical muted"></div>
+      <p id="detail-summary"></p><span id="detail-evidence" class="evidence"></span><p id="detail-body"></p>
+      <div class="detail-label">Основания и источники</div><ul id="detail-sources" class="source-list"></ul>
+      <div class="followup"><button id="ask" type="button">Углубить в OpenCode</button><p>Скопируй запрос в ту же TUI-сессию. Агент дополнит эту схему.</p><textarea id="request" readonly aria-label="Запрос для OpenCode" hidden></textarea><div id="copy-status" role="status"></div></div>
+    </aside>
+  </div>
+  <footer>Локальная объяснялка · внешние запросы отключены · выбор объекта или связи раскрывает детали</footer>
+</main>
+<script id="explanation-data" type="application/json">__EXPLANATION_DATA__</script>
+<script>
+(()=>{
+  'use strict';
+  const {model,modelPath}=JSON.parse(document.getElementById('explanation-data').textContent);
+  const $=id=>document.getElementById(id), graph=$('graph');
+  const evidence={observed:'Наблюдение',documented:'Документация',inferred:'Гипотеза',unknown:'Не проверено'};
+  const nodes=new Map(), edges=new Map(), paths=new Map(), buttons=[];
+  let step=model.steps[0], selected=model.entities[0];
+  document.title=model.title;$('title').textContent=model.title;$('summary').textContent=model.summary||'';
+  const columns=Math.max(...model.entities.map(e=>e.column))+1;
+  graph.style.gridTemplateColumns=`repeat(${columns},minmax(0,1fr))`;graph.dataset.columns=columns;
+  function addSources(container,ids){
+    container.replaceChildren();
+    for(const id of ids){
+      const source=model.sources.find(s=>s.id===id),li=document.createElement('li');
+      if(source.url){const a=document.createElement('a');a.href=source.url;a.textContent=source.label;a.target='_blank';a.rel='noopener noreferrer';li.append(a)}
+      else li.textContent=source.label;
+      container.append(li);
+    }
+    if(!ids.length){const li=document.createElement('li');li.textContent='Подтверждающий источник пока не указан';container.append(li)}
+  }
+  function select(item){
+    selected=item;const entity=nodes.has(item.id);
+    $('detail-kind').textContent=entity?'ОБЪЕКТ · '+item.kind:'ИНТЕРФЕЙС';
+    $('detail-title').textContent=item.label;
+    $('detail-technical').textContent=item.technical;
+    $('detail-summary').textContent=item.summary||`${model.entities.find(e=>e.id===item.from).label} → ${model.entities.find(e=>e.id===item.to).label}`;
+    $('detail-evidence').textContent=evidence[item.evidence];$('detail-body').textContent=item.details;
+    addSources($('detail-sources'),item.sources);
+    $('request').hidden=true;$('copy-status').textContent='';
+    for(const [id,b] of [...nodes,...edges]) b.setAttribute('aria-pressed',String(id===item.id));
+    for(const [id,p] of paths)p.classList.toggle('selected',id===item.id);
+  }
+  for(const entity of model.entities){
+    const b=document.createElement('button');b.type='button';b.className='node';b.dataset.id=entity.id;
+    b.style.gridRow=entity.row+1;b.style.gridColumn=entity.column+1;
+    for(const [cls,value] of [['node-label',entity.label],['technical',entity.technical],['node-state','']]){const s=document.createElement('span');s.className=cls;s.textContent=value;b.append(s)}
+    b.addEventListener('click',()=>select(entity));nodes.set(entity.id,b);graph.append(b);
+  }
+  for(const edge of model.interfaces){
+    const b=document.createElement('button');b.type='button';b.className='edge-label'+(edge.feedback?' feedback':'');b.dataset.id=edge.id;b.textContent=edge.label;
+    b.addEventListener('click',()=>select(edge));edges.set(edge.id,b);graph.append(b);
+    const p=document.createElementNS('http://www.w3.org/2000/svg','path');p.setAttribute('marker-end','url(#arrow)');$('paths').append(p);paths.set(edge.id,p);
+  }
+  function draw(){
+    const outer=graph.getBoundingClientRect();$('wires').setAttribute('viewBox',`0 0 ${outer.width} ${outer.height}`);
+    const box=id=>{const r=nodes.get(id).getBoundingClientRect();return{x:r.left-outer.left,y:r.top-outer.top,w:r.width,h:r.height,cx:r.left-outer.left+r.width/2,cy:r.top-outer.top+r.height/2}};
+    for(const edge of model.interfaces){
+      const a=box(edge.from),b=box(edge.to);let d,x,y;
+      if(edge.feedback){
+        if(Math.abs(a.cy-b.cy)<30){const bend=Math.max(a.y+a.h,b.y+b.h)+68;d=`M ${a.cx} ${a.y+a.h} C ${a.cx} ${bend},${b.cx} ${bend},${b.cx} ${b.y+b.h}`;x=(a.cx+b.cx)/2;y=(a.y+a.h+b.y+b.h)/2+51}
+        else{const bend=18;d=`M ${a.x} ${a.cy} C ${bend} ${a.cy},${bend} ${b.cy},${b.x} ${b.cy}`;x=32;y=(a.cy+b.cy)/2}
+      }else if(Math.abs(a.cx-b.cx)>Math.abs(a.cy-b.cy)){
+        const s=Math.sign(b.cx-a.cx),start=a.cx+s*a.w/2,end=b.cx-s*b.w/2,mid=(start+end)/2;d=`M ${start} ${a.cy} C ${mid} ${a.cy},${mid} ${b.cy},${end} ${b.cy}`;x=mid;y=(a.cy+b.cy)/2;
+      }else{
+        const s=Math.sign(b.cy-a.cy),start=a.cy+s*a.h/2,end=b.cy-s*b.h/2,mid=(start+end)/2;d=`M ${a.cx} ${start} C ${a.cx} ${mid},${b.cx} ${mid},${b.cx} ${end}`;x=(a.cx+b.cx)/2;y=mid;
+      }
+      paths.get(edge.id).setAttribute('d',d);const label=edges.get(edge.id);label.style.left=x+'px';label.style.top=y+'px';
+    }
+  }
+  function showStep(next){
+    step=next;
+    for(const [id,b] of nodes){b.querySelector('.node-state').textContent=step.entities[id]||'';b.dataset.waiting=String(model.interfaces.some(e=>(e.to===id||e.from===id)&&step.interfaces[e.id]==='waiting'))}
+    for(const edge of model.interfaces){const state=step.interfaces[edge.id]||'idle';paths.get(edge.id).setAttribute('class','wire '+state+(selected.id===edge.id?' selected':''));edges.get(edge.id).dataset.state=state}
+    buttons.forEach((b,i)=>b.setAttribute('aria-pressed',String(model.steps[i].id===step.id)));
+    $('event-title').textContent=step.label;$('event-details').textContent=step.details;$('event-evidence').textContent=evidence[step.evidence];addSources($('event-sources'),step.sources);
+    requestAnimationFrame(draw);
+  }
+  model.steps.forEach((s,i)=>{const b=document.createElement('button');b.type='button';const n=document.createElement('span');n.className='step-number';n.textContent=String(i+1).padStart(2,'0');b.append(n,document.createTextNode(s.label));b.addEventListener('click',()=>showStep(s));$('steps').append(b);buttons.push(b)});
+  $('ask').addEventListener('click',async()=>{
+    const request=`/visual-explain expand ${JSON.stringify(modelPath)} ${selected.id}\nРаскрой «${selected.label}» на этапе «${step.label}»: роль, интерфейсы и механизм. Проверь источники и дополни ту же схему, сохранив ID и окружение.`;
+    $('request').hidden=false;$('request').value=request;
+    try{await navigator.clipboard.writeText(request);$('copy-status').textContent='Скопировано — вставь в OpenCode'}
+    catch{$('request').focus();$('request').select();$('copy-status').textContent='Скопируй выделенный запрос и вставь в OpenCode'}
+  });
+  select(selected);showStep(step);new ResizeObserver(()=>requestAnimationFrame(draw)).observe(graph);
+})();
+</script>
+</html>
